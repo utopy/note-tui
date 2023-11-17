@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"fmt"
@@ -49,11 +49,6 @@ func (app *App) LoadLayout(pagesContainer *Pages) {
 	sidebarFrame := tview.NewFrame(sidebar)
 	sidebarFrame.SetBorders(1, 1, 1, 1, 1, 1)
 	sidebarFrame.AddText("Notes", true, tview.AlignLeft, tcell.ColorWhite)
-
-	body := tview.NewFlex()
-
-	body.SetTitle("Body")
-	body.SetBorder(true)
 
 	textArea := tview.NewTextArea()
 	textArea.SetPlaceholder("Nota")

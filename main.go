@@ -1,9 +1,11 @@
 package main
 
-func main() {
-	app := CreateApplication()
+import "note-taking/core"
 
-	pages := InitPages()
+func main() {
+	app := core.CreateApplication()
+
+	pages := core.InitPages()
 
 	app.LoadLayout(pages)
 
