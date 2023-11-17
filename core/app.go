@@ -11,6 +11,7 @@ type App struct {
 	Root      *tview.Application
 	Container *tview.Flex
 	Paths     *PathsInterface
+	State     *State
 }
 
 func CreateApplication() *App {
@@ -21,12 +22,13 @@ func CreateApplication() *App {
 
 	paths := StartPathInterface("test_unotes")
 
-	fmt.Println(paths.ConfigPath)
+	state := InitState("homepage")
 
 	app := &App{
 		Root:      instance,
 		Container: container,
 		Paths:     paths,
+		State:     state,
 	}
 
 	paths.Setup()
@@ -38,8 +40,6 @@ func CreateApplication() *App {
 
 func (app *App) LoadLayout(pagesContainer *Pages) {
 
-	// sidebar := tview.NewBox().SetBorder(true).SetTitle("Sidebar")
-
 	sidebar := tview.NewFlex()
 
 	sidebar.SetDirection(tview.FlexColumnCSS)
@@ -48,15 +48,59 @@ func (app *App) LoadLayout(pagesContainer *Pages) {
 
 	sidebarFrame := tview.NewFrame(sidebar)
 	sidebarFrame.SetBorders(1, 1, 1, 1, 1, 1)
-	sidebarFrame.AddText("Notes", true, tview.AlignLeft, tcell.ColorWhite)
+	sidebarFrame.AddText(fmt.Sprintf("[ %s ] mode", app.State.Mode), true, tview.AlignLeft, tcell.ColorWhite)
+
+	app.Root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEsc:
+
+			//Se l'app è già in view mode e si preme esc di nuovo, vai alla home
+			if app.State.ActivePage != "homepage" && app.State.Mode == VIEW_MODE {
+
+				pagesContainer.ChangePage("homePage")
+
+				return event
+
+			}
+
+			app.State.ToggleMode(VIEW_MODE)
+
+			sidebarFrame.Clear().AddText(
+				fmt.Sprintf("[ %s ] mode", app.State.Mode),
+				true,
+				tview.AlignLeft,
+				tcell.ColorWhite,
+			)
+			return nil
+		case tcell.KeyRune:
+			switch event.Rune() {
+			case 'i':
+				if app.State.Mode == INSERT_MODE {
+					return event
+				}
+				pagesContainer.ChangePage("textArea")
+				app.Root.SetFocus(pagesContainer.Container)
+				return nil
+			default:
+				return event
+			}
+		default:
+			return event
+		}
+	})
 
 	textArea := tview.NewTextArea()
 	textArea.SetPlaceholder("Nota")
 
-	pagesContainer.addPage("textArea", textArea, false)
+	homepage := tview.NewTextView()
+
+	homepage.SetText("Welcome to your tui companion\nPress 'i' to enter edit mode\nPress 'ESC' to enter view mode")
+
+	pagesContainer.AddPage("homePage", homepage, true)
+	pagesContainer.AddPage("textArea", textArea, false)
 
 	app.Container.AddItem(sidebarFrame, 35, 0, false)
-	app.Container.AddItem(pagesContainer.Container, 0, 1, true)
+	app.Container.AddItem(pagesContainer.Frame, 0, 1, true)
 
 }
 
